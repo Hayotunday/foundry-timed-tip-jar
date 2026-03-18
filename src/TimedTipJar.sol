@@ -7,6 +7,7 @@ contract TimedTipJar {
   error TimedTipJar__TipAmountMustBeMoreThanZero();
   error TimedTipJar__OnlyWithdrawerCanWithdraw();
   error TimedTipJar__WithdrawableTipMustBeMoreThanZero();
+  error TimedTipJar__TipsWithdrawalFailed();
 
   // --- State Variables ---
 
@@ -116,6 +117,9 @@ contract TimedTipJar {
     }
 
     (bool success,) = withdrawer.call{value: tipWithdrawable}("");
+    if (!success) {
+      revert TimedTipJar__TipsWithdrawalFailed();
+    }
     emit TipWithdrawn(withdrawer, tipWithdrawable);
   }
 
