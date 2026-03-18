@@ -36,7 +36,12 @@ contract TimedTipJar {
 
   // --- Events ---
 
-  event TipDeposited(address indexed tipper, uint256 indexed tipId, uint256 amount, uint256 lockedUntil);
+  event TipDeposited(
+    address indexed tipper,
+    uint256 indexed tipId,
+    uint256 amount,
+    uint256 lockedUntil
+  );
   event TipWithdrawn(address indexed withdrawer, uint256 amount);
 
   // --- Functions ---
@@ -75,11 +80,14 @@ contract TimedTipJar {
    * The withdrawer should call this function repeatedly if necessary to withdraw all available tips.
    */
   function withdrawTips(uint256 _maxTipsToProcess) external {
-    if (msg.sender != withdrawer) revert TimedTipJar__OnlyWithdrawerCanWithdraw();
+    if (msg.sender != withdrawer) {
+      revert TimedTipJar__OnlyWithdrawerCanWithdraw();
+    }
 
     uint256 tipWithdrawable = 0;
     uint256 tipCount = tipIds.length;
-    uint256 tipsToCheck = tipCount < _maxTipsToProcess ? tipCount : _maxTipsToProcess;
+    uint256 tipsToCheck =
+      tipCount < _maxTipsToProcess ? tipCount : _maxTipsToProcess;
 
     uint256[] memory tipIdsToRemove = new uint256[](tipsToCheck);
     uint256 removeCount = 0;
@@ -98,14 +106,16 @@ contract TimedTipJar {
       }
     }
 
-    if (tipWithdrawable <= 0) revert TimedTipJar__WithdrawableTipMustBeMoreThanZero();
+    if (tipWithdrawable <= 0) {
+      revert TimedTipJar__WithdrawableTipMustBeMoreThanZero();
+    }
 
     // Remove the identified tips using the gas-efficient swap-and-pop method.
     for (uint256 i = 0; i < removeCount; i++) {
       _removeTip(tipIdsToRemove[i]);
     }
 
-    payable(withdrawer).transfer(tipWithdrawable);
+    (bool success,) = withdrawer.call{value: tipWithdrawable}("");
     emit TipWithdrawn(withdrawer, tipWithdrawable);
   }
 
